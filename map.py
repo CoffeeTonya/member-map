@@ -20,10 +20,7 @@ def load_postcode_master():
         '市区町村カナ', '町域カナ', '都道府県名', '市区町村名', '町域名',
         '項目1', '項目2', '項目3', '項目4', '項目5', '項目6'
     ]
-    if not os.path.exists(path):
-        st.error(f"郵便番号マスタファイルが見つかりません: {path} を確認してください。")
-        st.stop()
-    return pd.read_csv(path, encoding='cp932', header=None, names=column_names)
+    return pd.read_csv('postcode/KEN_ALL.csv', encoding='cp932', header=None, names=column_names)
 
 def get_lat_lng_from_xml(url):
     try:
