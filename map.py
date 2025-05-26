@@ -59,7 +59,7 @@ if uploaded_file is not None:
     df_result = df_result.dropna(subset=['緯度', '経度'])
 
     st.success("緯度・経度の取得が完了しました！")
-    st.dataframe(df_result)
+    # st.dataframe(df_result)
 
     csv = df_result.to_csv(index=False, encoding='utf-8-sig')
     st.download_button("CSVをダウンロード", data=csv, file_name='output_with_latlng.csv', mime='text/csv')
@@ -73,7 +73,7 @@ if uploaded_file is not None:
             initial_view_state=pdk.ViewState(
                 latitude=midpoint[0],
                 longitude=midpoint[1],
-                zoom=5,
+                zoom=12,
                 pitch=0,
                 bearing=0
             ),
