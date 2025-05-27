@@ -23,8 +23,31 @@ def get_lat_lng_from_xml(url):
         return None, None
 
 if uploaded_file is not None:
-    member_list = pd.read_csv(uploaded_file, encoding='cp932', on_bad_lines='skip')
+    member_list = pd.read_csv(uploaded_file, encoding='cp932', skiprows=[1], on_bad_lines='skip')
     st.write("アップロードされたデータ：", member_list.head())
+
+    # フィルター対象列の確認と選択肢表示（サイドバー）
+    filter_columns = ['入会ショップ', '性別', '会員ランク', '累計購入回数', '最終適用利用店舗']
+    available_filters = [col for col in filter_columns if col in member_list.columns]
+
+    selected_filters = {}
+    if available_filters:
+        with st.sidebar:
+            st.subheader("データの表示切替")
+            for col in available_filters:
+                if col == '累計購入回数':
+                    member_list[col] = pd.to_numeric(member_list[col], errors='coerce')
+                    min_val = int(member_list[col].min(skipna=True))
+                    max_val = int(member_list[col].max(skipna=True))
+                    selected_range = st.slider(f"{col} の範囲を選択", min_val, max_val, (min_val, max_val))
+                    member_list = member_list[(member_list[col] >= selected_range[0]) & (member_list[col] <= selected_range[1])]
+                else:
+                    options = member_list[col].dropna().unique().tolist()
+                    selected = st.multiselect(f"{col} を選択", options, default=options)
+                    selected_filters[col] = selected
+
+            for col, selected in selected_filters.items():
+                member_list = member_list[member_list[col].isin(selected)]
 
     # 住所を構築
     member_list['住所'] = (
