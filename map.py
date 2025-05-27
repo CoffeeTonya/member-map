@@ -4,7 +4,7 @@ import requests
 import xml.etree.ElementTree as ET
 import pydeck as pdk
 
-st.title("ヒートマップ作成ツール")
+st.title("会員ヒートマップ作成ツール")
 st.write("会員一覧表をアップロードしてください（住所情報が必要です）")
 
 uploaded_file = st.file_uploader("CSVファイルを選択", type="csv")
@@ -24,6 +24,7 @@ def get_lat_lng_from_xml(url):
 
 if uploaded_file is not None:
     member_list = pd.read_csv(uploaded_file, encoding='cp932', skiprows=[1], on_bad_lines='skip')
+    total_records = len(member_list)
     st.write("アップロードされたデータ：", member_list.head())
 
     # フィルター対象列の確認と選択肢表示（サイドバー）
@@ -35,16 +36,23 @@ if uploaded_file is not None:
         with st.sidebar:
             st.subheader("データの表示切替")
             for col in available_filters:
+                st.markdown("---")
                 if col == '累計購入回数':
                     member_list[col] = pd.to_numeric(member_list[col], errors='coerce')
                     min_val = int(member_list[col].min(skipna=True))
                     max_val = int(member_list[col].max(skipna=True))
                     selected_range = st.slider(f"{col} の範囲を選択", min_val, max_val, (min_val, max_val))
                     member_list = member_list[(member_list[col] >= selected_range[0]) & (member_list[col] <= selected_range[1])]
+                    st.markdown(f"<span style='font-size: 12px'>{selected_range[0]}～{selected_range[1]} の範囲で {len(member_list)} 件</span>", unsafe_allow_html=True)
                 else:
                     options = member_list[col].dropna().unique().tolist()
                     selected = st.multiselect(f"{col} を選択", options, default=options)
                     selected_filters[col] = selected
+                    counts = member_list[col].value_counts().reindex(options).dropna()
+                    for val in selected:
+                        st.markdown(f"<span style='font-size: 12px'>{val}：{counts[val]} 件</span>", unsafe_allow_html=True)
+
+            st.markdown("---")
 
             for col, selected in selected_filters.items():
                 member_list = member_list[member_list[col].isin(selected)]
@@ -82,7 +90,7 @@ if uploaded_file is not None:
     df_result = df_result.dropna(subset=['緯度', '経度'])
 
     st.success("緯度・経度の取得が完了しました！")
-    # st.dataframe(df_result)
+    st.markdown(f"### 地図表示（対象件数：{len(df_result)} / 全体：{total_records} 件）")
 
     csv = df_result.to_csv(index=False, encoding='utf-8-sig')
     st.download_button("CSVをダウンロード", data=csv, file_name='output_with_latlng.csv', mime='text/csv')
